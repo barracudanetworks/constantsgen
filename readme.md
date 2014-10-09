@@ -1,6 +1,6 @@
 # constantsgen
 
-Generate Python containing constants in the specified C-like files.
+Generate Python or PHP containing constants in the specified C-like files.
 
 It supports #define constants and named enums. It takes a specification
 of which constants to export on standard input and outputs to standard
@@ -16,3 +16,4 @@ in C, like XDR files, do not cause problems.
 Example usage:
 
     python constantsgen.py constants.txt constants.py
+    python constantsgen.py -l php constants.txt constants.php

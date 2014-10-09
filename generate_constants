@@ -3,12 +3,14 @@ import argparse
 
 from constantsgen import constantsparse
 from constantsgen import pythonwriter
+from constantsgen import phpwriter
 
 writers = {
     'python': pythonwriter.PythonWriter,
+    'php': phpwriter.PHPWriter,
 }
 
-parser = argparse.ArgumentParser(description="""Generate Python containing
+parser = argparse.ArgumentParser(description="""Generate Python/PHP containing
 constants in the specified C-like files.
 
 It supports #define constants and named enums.
