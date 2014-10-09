@@ -15,4 +15,4 @@ in C, like XDR files, do not cause problems.
 
 Example usage:
 
-    python constantsgen.py path/to/file.c path/to/file.h < constants.txt > constants.py
+    python constantsgen.py constants.txt constants.py
