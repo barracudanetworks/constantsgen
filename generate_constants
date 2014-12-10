@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+import argparse
+
+from constantsgen import constantsparse
+from constantsgen import pythonwriter
+from constantsgen import phpwriter
+
+writers = {
+    'python': pythonwriter.PythonWriter,
+    'php': phpwriter.PHPWriter,
+}
+
+parser = argparse.ArgumentParser(description="""Generate Python/PHP containing
+constants in the specified C-like files.
+
+It supports #define constants and named enums.
+""")
+parser.add_argument("input_file", type=argparse.FileType('r'),
+                    help="Specification of which constants to export and which "
+                         "files to search")
+parser.add_argument("output_file", type=argparse.FileType('w'),
+                    help="Name of generated constants file")
+parser.add_argument("-l", "--language", choices=writers, default='python',
+                    help="output file language (default: %(default)s)")
+args = parser.parse_args()
+
+constants = constantsparse.ConstantsParser(args.input_file)
+
+writer = writers[args.language](constants)
+writer.write(args.output_file)
