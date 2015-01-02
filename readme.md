@@ -15,5 +15,5 @@ in C, like XDR files, do not cause problems.
 
 Example usage:
 
-    python constantsgen.py constants.txt constants.py
-    python constantsgen.py -l php constants.txt constants.php
+    ./generate_constants constants.txt constants.py
+    ./generate_constants -l php constants.txt constants.php
