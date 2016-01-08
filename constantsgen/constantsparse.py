@@ -128,6 +128,9 @@ class ConstantsParser:
                     value = 0
                     if explicit_values:
                         name = explicit_values[0][0]
+                        if name in enum_definition.name_overrides:
+                            name = enum_definition.name_overrides[name]
+
                         value = int(enum_values[name], base=0) + 1
 
                     for name in implicit_values:
