@@ -109,7 +109,7 @@ class ConstantsParser:
                     continue
 
                 name = name_search.group(1)
-                if not name in self.imported_enums:
+                if name not in self.imported_enums:
                     continue
 
                 enum_definition = self.imported_enums.pop(name)
