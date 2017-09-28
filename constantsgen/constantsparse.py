@@ -24,6 +24,16 @@ enum_explicit_value = re.compile(r"(?:\s*([^\s]+)\s*=\s*([^\s,]+),?)$",
 # Enum value with an implicit value.
 enum_implicit_value = re.compile(r"(?:^\s*([^\s,]+),?$)", flags=re.MULTILINE)
 
+# Ignore size and signedness suffixes.
+integer_literal_value = re.compile(r"([0-9]+)")
+
+
+def filter_value(value):
+    if integer_literal_value.match(value):
+        return integer_literal_value.findall(value).pop()
+
+    return value
+
 
 class ConstantsParser:
     def __init__(self, input_file):
@@ -89,7 +99,7 @@ class ConstantsParser:
                     continue
 
                 name = self.imported_constants.pop(name)
-                self.constant_values[name] = value
+                self.constant_values[name] = filter_value(value)
 
             for enum in enums.findall(file):
                 # TODO: Could generate Enum classes only?
@@ -116,7 +126,7 @@ class ConstantsParser:
                         if name in enum_definition.name_overrides:
                             name = enum_definition.name_overrides[name]
 
-                        enum_values[name] = value
+                        enum_values[name] = filter_value(value)
 
                 implicit_values = enum_implicit_value.findall(contents)
                 # If there are any explicit values this assumes either all
@@ -131,13 +141,13 @@ class ConstantsParser:
                         if name in enum_definition.name_overrides:
                             name = enum_definition.name_overrides[name]
 
-                        value = int(enum_values[name], base=0) + 1
+                        value = int(filter_value(enum_values[name]), base=0) + 1
 
                     for name in implicit_values:
                         if name in enum_definition.name_overrides:
                             name = enum_definition.name_overrides[name]
 
-                        enum_values[name] = value
+                        enum_values[name] = filter_value(value)
                         value += 1
 
                 assert enum_values
