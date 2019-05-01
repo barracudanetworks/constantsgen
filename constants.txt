@@ -28,7 +28,7 @@ enum:
 # Because C enum values almost always start with a type followed by
 # an underscore, the value names have that before the first underscore,
 # if any, removed, and are converted to lower-case.
-frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME elaboration
+frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME clearer_name
 # Without this name override FROBULATOR_OBTUSE_NAME would become
 # FrobulatorType.obtuse_name.
 
