@@ -8,7 +8,6 @@ class PythonWriter:
 
         for name, enum in self.constants.enum_values.items():
             out.write("""
-
 @unique
 class {}(Enum):\n""".format(name))
             for base_name, value in enum.items():
@@ -20,6 +19,8 @@ class {}(Enum):\n""".format(name))
                 name = base_name[first_underscore + 1:].lower()
 
                 out.write("    {} = {}\n".format(name, value))
+
+            out.write("\n\n")
 
         for name, value in self.constants.constant_values.items():
             out.write("{} = {}\n".format(name, value))
