@@ -33,6 +33,8 @@ class ConstantsParser:
         self.constant_values = OrderedDict()
         self.enum_values = OrderedDict()
 
+        manual_suffixes = OrderedDict()
+
         section = None
         for line in input_file:
             # Skip blank lines and comments
@@ -72,10 +74,18 @@ class ConstantsParser:
 
                 self.imported_enums[target.source_name] = target
 
-            elif section == "manual":
-                words = line.split()
-                assert len(words) == 2
-                self.constant_values[words[0]] = words[1]
+            elif section.startswith("manual"):
+                target_container = None
+                if section == "manual_prefix":
+                    target_container = self.constant_values
+                elif section == "manual" or section == "manual_suffix":
+                    target_container = manual_suffixes
+
+                if target_container is not None:
+                    # Separate the key, and only the key, by whitespace.
+                    # The remainder of the line is the value.
+                    key, value = line.split(None, 1)
+                    target_container[key] = value.rstrip()
 
         for filename in self.source_files:
             # Resolve paths in input file relative to its location.
@@ -149,3 +159,7 @@ class ConstantsParser:
         if self.imported_enums:
             names = list(self.imported_enums)
             raise Exception("enums {} not found".format(names))
+
+        # Add manual suffixes now that all values are loaded.
+        for name, value in manual_suffixes.items():
+            self.constant_values[name] = value

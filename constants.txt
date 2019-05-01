@@ -14,9 +14,9 @@
 # An example:
 
 file:
-# Note that these paths are relative to this specification file
-../path/to/file.c
-../path/to/file.h
+# These file paths are relative to this specification file
+example/file.c
+example/file.h
 
 constant:
 # Sections can have comments in them too.
@@ -33,4 +33,11 @@ frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME clearer_name
 # FrobulatorType.obtuse_name.
 
 manual:
-ALSO_GOES_IN_THE_OUTPUT 0xdeadbeef
+# Alias for manual_suffix. These go after the values read from files,
+# so these may refer to them.
+ALSO_GOES_IN_THE_OUTPUT REASONABLE_CONSTANT + 2
+
+manual_prefix:
+# These go before the values read from files, so they may refer to
+# these.
+THIS_GOES_TOO 0xdeadbeef 
