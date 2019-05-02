@@ -33,8 +33,8 @@ frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME clearer_name
 # FrobulatorType.obtuse_name.
 
 manual:
-# Alias for manual_suffix. These go after the values read from files,
-# so these may refer to them.
+# Alias for manual_suffix. Manual suffixes go after the values read
+# from files, and therefore may refer to them.
 ALSO_GOES_IN_THE_OUTPUT REASONABLE_CONSTANT + 2
 
 manual_prefix:
