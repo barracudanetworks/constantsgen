@@ -40,4 +40,4 @@ ALSO_GOES_IN_THE_OUTPUT REASONABLE_CONSTANT + 2
 manual_prefix:
 # These go before the values read from files, so they may refer to
 # these.
-THIS_GOES_TOO 0xdeadbeef 
+THIS_GOES_TOO 0xdeadbeef
