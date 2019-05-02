@@ -14,9 +14,9 @@
 # An example:
 
 file:
-# Note that these paths are relative to this specification file
-../path/to/file.c
-../path/to/file.h
+# These file paths are relative to this specification file
+example/file.c
+example/file.h
 
 constant:
 # Sections can have comments in them too.
@@ -28,9 +28,16 @@ enum:
 # Because C enum values almost always start with a type followed by
 # an underscore, the value names have that before the first underscore,
 # if any, removed, and are converted to lower-case.
-frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME elaboration
+frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME clearer_name
 # Without this name override FROBULATOR_OBTUSE_NAME would become
 # FrobulatorType.obtuse_name.
 
 manual:
-ALSO_GOES_IN_THE_OUTPUT 0xdeadbeef
+# Alias for manual_suffix. Manual suffixes go after the values read
+# from files, and therefore may refer to them.
+ALSO_GOES_IN_THE_OUTPUT REASONABLE_CONSTANT + 2
+
+manual_prefix:
+# These go before the values read from files, so they may refer to
+# these.
+THIS_GOES_TOO 0xdeadbeef

@@ -1,0 +1,4 @@
+#!/bin/bash
+./generate_constants constants.txt constants.py
+./generate_constants -l php constants.txt constants.php
+./generate_constants -l latex constants.txt constants.tex
