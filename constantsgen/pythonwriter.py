@@ -1,3 +1,26 @@
+def values_are_unique(enum):
+    """Whether all of an enum's values are distinct.
+
+    Values read from source files are raw C text and are never evaluated, so
+    a value that is not an integer literal only counts as a duplicate of
+    another value written exactly the same way.
+    """
+    seen = set()
+    for value in enum.values():
+        if isinstance(value, str):
+            try:
+                value = int(value, base=0)
+            except ValueError:
+                pass
+
+        if value in seen:
+            return False
+
+        seen.add(value)
+
+    return True
+
+
 class PythonWriter:
     def __init__(self, constants):
         self.constants = constants
@@ -7,7 +30,10 @@ class PythonWriter:
         out.write("from enum import Enum, unique\n\n")
 
         for name, enum in self.constants.enum_values.items():
-            out.write(f"\n@unique\nclass {name}(Enum):\n")
+            # C enums may give several names the same value; @unique would
+            # reject those aliases when the generated file is imported.
+            decorator = "@unique\n" if values_are_unique(enum) else ""
+            out.write(f"\n{decorator}class {name}(Enum):\n")
             for base_name, value in enum.items():
                 # For the enum value names remove everything up through the
                 # first underscore and convert the remainder to lowercase. For
