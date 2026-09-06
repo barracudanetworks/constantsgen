@@ -29,6 +29,41 @@ enum_explicit_value = re.compile(r"(?:\s*([^\s]+)\s*=\s*([^\s,]+),?)$",
 # Enum value with an implicit value.
 enum_implicit_value = re.compile(r"(?:^\s*([^\s,]+),?$)", flags=re.MULTILINE)
 
+# Comments, removed from an enum's contents before its values are matched.
+comments = re.compile(r"/\*.*?\*/|//[^\n]*", flags=re.DOTALL)
+
+
+def clean_contents(contents):
+    """Remove comments and trailing whitespace from an enum's contents.
+
+    Both value patterns are anchored to the ends of lines, so anything left
+    after a value -- a comment, or the whitespace where one was removed --
+    makes that value match nothing and be dropped without an error.
+
+    Newlines within a comment are kept, so that removing a comment spanning
+    several lines cannot join two values onto one line, where neither would
+    match.
+    """
+    def replacement(match):
+        return "\n" * match.group().count("\n")
+
+    contents = comments.sub(replacement, contents)
+
+    return "\n".join(line.rstrip() for line in contents.split("\n"))
+
+
+def override_name(name, enum_definition, overridden):
+    """Apply a value name override from the specification, if there is one.
+
+    Names that were overridden are added to overridden so that writers can
+    tell them from names read from the source file.
+    """
+    if name in enum_definition.name_overrides:
+        name = enum_definition.name_overrides[name]
+        overridden.add(name)
+
+    return name
+
 
 class ConstantsParser:
     def __init__(self, input_file):
@@ -37,6 +72,7 @@ class ConstantsParser:
         self.imported_enums = {}
         self.constant_values = {}
         self.enum_values = {}
+        self.enum_overridden_names = {}
 
         manual_suffixes = {}
 
@@ -134,17 +170,18 @@ class ConstantsParser:
 
                 enum_definition = self.imported_enums.pop(name)
 
-                contents = enum_contents.search(enum).group(1)
+                contents = clean_contents(enum_contents.search(enum).group(1))
 
                 name = enum_definition.destination_name
                 self.enum_values[name] = {}
                 enum_values = self.enum_values[name]
+                self.enum_overridden_names[name] = set()
+                overridden = self.enum_overridden_names[name]
 
                 explicit_values = enum_explicit_value.findall(contents)
                 if explicit_values:
                     for name, value in explicit_values:
-                        if name in enum_definition.name_overrides:
-                            name = enum_definition.name_overrides[name]
+                        name = override_name(name, enum_definition, overridden)
 
                         enum_values[name] = value
 
@@ -174,15 +211,22 @@ class ConstantsParser:
                                 "way; either all values or only the first must "
                                 "be explicit")
 
-                        name = explicit_values[0][0]
-                        if name in enum_definition.name_overrides:
-                            name = enum_definition.name_overrides[name]
+                        name = override_name(explicit_values[0][0],
+                                             enum_definition, overridden)
 
-                        value = int(enum_values[name], base=0) + 1
+                        # The values are raw text and are never evaluated, so
+                        # the one counted up from has to be a literal.
+                        try:
+                            value = int(enum_values[name], base=0) + 1
+                        except ValueError:
+                            raise ParseError(
+                                f"enum {enum_definition.source_name} value "
+                                f"{name} is {enum_values[name]!r}, which is "
+                                "not an integer literal, so the implicit "
+                                "values after it cannot be numbered") from None
 
                     for name in implicit_values:
-                        if name in enum_definition.name_overrides:
-                            name = enum_definition.name_overrides[name]
+                        name = override_name(name, enum_definition, overridden)
 
                         enum_values[name] = value
                         value += 1
