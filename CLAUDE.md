@@ -18,7 +18,12 @@ python -m constantsgen -l latex constants.txt constants.tex  # LaTeX output
 Install (provides the `generate_constants` console script): `pip install .`
 Requires Python 3.9+ (`pyproject.toml`).
 
-There is no test suite, linter config, or CI. `constants.txt` + `example/file.c` +
+Run the tests with `python -m unittest discover` from the source root. They cover the parser
+and all three writers, and each one writes a specification plus the sources it names into a
+temporary directory, since `ConstantsParser` resolves source paths relative to the
+specification and so needs real files.
+
+There is no linter config or CI. `constants.txt` + `example/file.c` +
 `example/file.h` are the working fixtures. The generated `constants.{py,php,tex}` are
 **gitignored**, so `git diff` will not show output changes — save copies before changing
 the parser or a writer and diff by hand:
@@ -117,7 +122,10 @@ Enums are only a real construct in the Python output:
   `0x1` collide) and as raw text otherwise — never by evaluating them.
 - **PHP** and **LaTeX** ignore the destination enum name entirely and flatten members into
   top-level `define(...)` / `\newcommand` entries under their unmangled source names.
-- **LaTeX** strips `_` from command *names* (LaTeX commands cannot contain underscores).
+- **LaTeX** strips `_` from command *names* (LaTeX commands cannot contain underscores), and
+  rewrites *values* in `command_body`: a name in a value that is also generated as a command
+  becomes a reference to that command, so a `manual_suffix` referring to a file value still
+  refers to it, and every underscore left over is escaped.
 
 A member renamed by an `enum:` name override is **not** mangled by the Python writer — an
 override is used exactly as written, since mangling it would defeat the point of overriding it.
@@ -130,19 +138,23 @@ that is a hard constraint of the format rather than a naming convention.
 
 Confirmed against the current code; each is a live trap when editing:
 
-- **LaTeX mangles names but not values.** The fixture generates
-  `\newcommand{\ALSOGOESINTHEOUTPUT}{REASONABLE_CONSTANT + 2}`; the underscores in the value
-  survive and that is not valid LaTeX.
+- **LaTeX escapes underscores in values but nothing else.** A name in a value that matches a
+  generated command is rewritten to refer to it (`REASONABLE_CONSTANT + 2` becomes
+  `\REASONABLECONSTANT + 2`) and any other underscore is escaped, but the rest of LaTeX's
+  special characters are not. A value containing `%` — a C modulo, say — still comments out
+  the rest of the line.
 - **No line-continuation handling.** A `#define` ending in `\` is captured only up to the end of
   that line, backslash included.
 - **Function-like macros keep their parameter list in the name.** `#define F(x) ...` is imported
   under the literal name `F(x)`.
-- **Enum members must be one per line.** Both member patterns are `re.MULTILINE` and anchored to
-  line ends, so a single-line `enum e { A = 1, B = 2 };` matches nothing and fails with
-  "enum e has no values". `clean_contents` exists because of that anchoring: anything trailing a
-  member — a comment, or leftover whitespace — silently dropped it, so comments and trailing
-  whitespace are removed from an enum body before the patterns run. Nothing does the same for
-  the rest of a source file, so a trailing comment on a `#define` still lands in its value.
+- **Enum members must be one per line, and a value cannot contain a space.** Both member
+  patterns are `re.MULTILINE` and anchored to line ends, so anything else on the line leaves the
+  member matched in part or not at all. Two guards keep that from silently dropping members
+  rather than reporting them: `clean_contents` removes comments and trailing whitespace from an
+  enum body before the patterns run, and `enum_value_line` then requires every non-empty line to
+  be exactly one value, so `enum e { A = 1, B = 2 };` and `A = 1 << 2,` both raise `ParseError`.
+  Nothing does the same for the rest of a source file, so a trailing comment on a `#define`
+  still lands in its value.
 - **The enum pattern is brittle.** It requires a trailing `;` and does not tolerate nested
   braces; a `}` inside a comment or a string in the enum body will also cut it short, since
   comments are only stripped from the body after this pattern has already found its end.
