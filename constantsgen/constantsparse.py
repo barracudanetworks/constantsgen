@@ -5,6 +5,10 @@ from pathlib import Path
 EnumImport = namedtuple("EnumImport",
                         "source_name destination_name name_overrides")
 
+
+class ParseError(Exception):
+    """Raised when the specification or a source file cannot be parsed."""
+
 # #define constants.
 constants = re.compile(r"#define ([^\s]+)\s+(.+)")
 
@@ -51,20 +55,27 @@ class ConstantsParser:
 
             elif section == "constant":
                 words = line.split()
-                assert len(words) <= 2
+                if len(words) > 2:
+                    raise ParseError(
+                        f"constant line expects 'source_name [destination_name]': {line!r}")
                 # Export as the source name if only one is provided; otherwise
                 # use the override.
                 self.imported_constants[words[0]] = words[-1]
 
             elif section == "enum":
                 words = line.split()
-                assert len(words) >= 2
+                if len(words) < 2:
+                    raise ParseError(
+                        "enum line expects 'source_name destination_name "
+                        f"[source_value destination_value]...': {line!r}")
 
                 name_overrides = {}
                 if len(words) > 2:
                     overrides = words[2:]
                     # Pairs: source_name dest_name
-                    assert len(overrides) % 2 == 0
+                    if len(overrides) % 2 != 0:
+                        raise ParseError(
+                            f"enum name overrides must come in pairs: {line!r}")
                     index = 0
                     while index + 1 < len(overrides):
                         name_overrides[overrides[index]] = overrides[index + 1]
@@ -134,7 +145,11 @@ class ConstantsParser:
                 # are implicit.
                 # TODO: Use C constants for extracted enums?
                 if implicit_values:
-                    assert len(explicit_values) <= 1
+                    if len(explicit_values) > 1:
+                        raise ParseError(
+                            f"enum {enum_definition.source_name} mixes explicit "
+                            "and implicit values in an unsupported way; either "
+                            "all values or only the first must be explicit")
                     value = 0
                     if explicit_values:
                         name = explicit_values[0][0]
@@ -150,15 +165,17 @@ class ConstantsParser:
                         enum_values[name] = value
                         value += 1
 
-                assert enum_values
+                if not enum_values:
+                    raise ParseError(
+                        f"enum {enum_definition.source_name} has no values")
 
         if self.imported_constants:
             names = list(self.imported_constants)
-            raise Exception(f"constants {names} not found")
+            raise ParseError(f"constants {names} not found")
 
         if self.imported_enums:
             names = list(self.imported_enums)
-            raise Exception(f"enums {names} not found")
+            raise ParseError(f"enums {names} not found")
 
         # Add manual suffixes now that all values are loaded.
         for name, value in manual_suffixes.items():
