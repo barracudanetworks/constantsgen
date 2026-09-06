@@ -9,8 +9,9 @@ EnumImport = namedtuple("EnumImport",
 class ParseError(Exception):
     """Raised when the specification or a source file cannot be parsed."""
 
-# #define constants.
-constants = re.compile(r"#define ([^\s]+)\s+(.+)")
+# #define constants. The separator must not cross a newline, or a #define
+# with no value would take the following line as its value.
+constants = re.compile(r"#define ([^\s]+)[^\S\n]+([^\s].*)")
 
 # Enums.
 enums = re.compile(r"enum[^{]+\{[^}]+\};")
@@ -99,7 +100,11 @@ class ConstantsParser:
                 if target_container is not None:
                     # Separate the key, and only the key, by whitespace.
                     # The remainder of the line is the value.
-                    key, value = line.split(None, 1)
+                    words = line.split(None, 1)
+                    if len(words) < 2:
+                        raise ParseError(
+                            f"{section} line expects 'name value': {line!r}")
+                    key, value = words
                     target_container[key] = value.rstrip()
 
         # Resolve paths in the input file relative to its location.
@@ -144,18 +149,31 @@ class ConstantsParser:
                         enum_values[name] = value
 
                 implicit_values = enum_implicit_value.findall(contents)
-                # If there are any explicit values this assumes either all
-                # values are explicit or only the first is explicit and the rest
-                # are implicit.
+                # If there are any explicit values then either all values must
+                # be explicit or only the first is explicit and the rest are
+                # implicit; anything else is rejected below.
                 # TODO: Use C constants for extracted enums?
                 if implicit_values:
-                    if len(explicit_values) > 1:
-                        raise ParseError(
-                            f"enum {enum_definition.source_name} mixes explicit "
-                            "and implicit values in an unsupported way; either "
-                            "all values or only the first must be explicit")
                     value = 0
                     if explicit_values:
+                        # The continuation below counts up from the explicit
+                        # value, so it is only correct if that value really is
+                        # the first one declared. Compare where the two kinds
+                        # of value first name something, so that comments and
+                        # whitespace between values do not matter. The name
+                        # group is what is compared because the explicit
+                        # pattern's leading \s* reaches back over newlines.
+                        first_explicit = enum_explicit_value.search(contents)
+                        first_implicit = enum_implicit_value.search(contents)
+                        if (len(explicit_values) > 1
+                                or first_explicit.start(1)
+                                > first_implicit.start(1)):
+                            raise ParseError(
+                                f"enum {enum_definition.source_name} mixes "
+                                "explicit and implicit values in an unsupported "
+                                "way; either all values or only the first must "
+                                "be explicit")
+
                         name = explicit_values[0][0]
                         if name in enum_definition.name_overrides:
                             name = enum_definition.name_overrides[name]
