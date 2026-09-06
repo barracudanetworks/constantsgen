@@ -188,9 +188,17 @@ class EnumTest(GeneratorTestCase):
         self.assertEqual(constants.enum_overridden_names["AnEnum"],
                          {"clearer_name"})
 
+    def test_without_values_raises(self):
+        with self.assertRaisesRegex(ParseError, "has no values"):
+            self.enum("")
+
+    def test_holding_only_a_comment_raises(self):
+        with self.assertRaisesRegex(ParseError, "has no values"):
+            self.enum("    /* nothing but a comment */\n")
+
     def test_several_values_on_one_line_raises(self):
         # Rather than reading the last one and dropping the rest.
-        with self.assertRaises(ParseError):
+        with self.assertRaisesRegex(ParseError, "not a single value"):
             self.parse("""\
                 file:
                 file.h
@@ -199,7 +207,7 @@ class EnumTest(GeneratorTestCase):
                 """, {"file.h": "enum an_enum_e { E_X = 1, E_Y = 2 };\n"})
 
     def test_a_value_containing_a_space_raises(self):
-        with self.assertRaises(ParseError):
+        with self.assertRaisesRegex(ParseError, "not a single value"):
             self.enum("    E_X = 1 << 2,\n    E_Y,\n")
 
     def test_not_found_raises(self):
