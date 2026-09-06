@@ -29,6 +29,13 @@ enum_explicit_value = re.compile(r"(?:\s*([^\s]+)\s*=\s*([^\s,]+),?)$",
 # Enum value with an implicit value.
 enum_implicit_value = re.compile(r"(?:^\s*([^\s,]+),?$)", flags=re.MULTILINE)
 
+# A whole line of an enum's contents holding one value, used to check that
+# the patterns above can account for every line. They match a value anywhere
+# in a line, so without this a line holding anything more -- a second value,
+# or a value containing a space -- would be matched in part and the rest
+# dropped from the output without an error.
+enum_value_line = re.compile(r"[^\s,=]+(?:\s*=\s*[^\s,]+)?,?")
+
 # Comments, removed from an enum's contents before its values are matched.
 comments = re.compile(r"/\*.*?\*/|//[^\n]*", flags=re.DOTALL)
 
@@ -177,6 +184,14 @@ class ConstantsParser:
                 enum_values = self.enum_values[name]
                 self.enum_overridden_names[name] = set()
                 overridden = self.enum_overridden_names[name]
+
+                for value_line in contents.split("\n"):
+                    value_line = value_line.strip()
+                    if value_line and not enum_value_line.fullmatch(value_line):
+                        raise ParseError(
+                            f"enum {enum_definition.source_name} has a line "
+                            "that is not a single value, which would be only "
+                            f"partly read: {value_line!r}")
 
                 explicit_values = enum_explicit_value.findall(contents)
                 if explicit_values:
