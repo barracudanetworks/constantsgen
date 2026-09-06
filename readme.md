@@ -3,8 +3,7 @@
 Generate code in various languages containing constants defined in the
 specified C-like files. It supports #define constants and named enums.
 
-It uses Python 3.4 enums, and works with Python 3.4 or higher and
-earlier versions with the enum34 package.
+Requires Python 3.9 or later.
 
 constants.txt contains a description and example of the input format.
 It does not parse the files, so things that would contain syntax errors
