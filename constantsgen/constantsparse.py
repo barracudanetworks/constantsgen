@@ -1,6 +1,6 @@
 import re
-import os
 from collections import namedtuple
+from pathlib import Path
 
 EnumImport = namedtuple("EnumImport",
                         "source_name destination_name name_overrides")
@@ -87,10 +87,10 @@ class ConstantsParser:
                     key, value = line.split(None, 1)
                     target_container[key] = value.rstrip()
 
+        # Resolve paths in the input file relative to its location.
+        input_dir = Path(input_file.name).parent
         for filename in self.source_files:
-            # Resolve paths in input file relative to its location.
-            input_dir = os.path.dirname(input_file.name)
-            file = open(os.path.join(input_dir, filename)).read()
+            file = (input_dir / filename).read_text(encoding="utf-8")
 
             for constant in constants.findall(file):
                 name, value = constant
