@@ -10,9 +10,9 @@ class LatexWriter:
             for name, value in enum.items():
                 # Latex does not support underscores in commands.
                 name = name.replace("_", "")
-                out.write("\\newcommand{{\\{}}}{{{}}}\n".format(name, value))
+                out.write(f"\\newcommand{{\\{name}}}{{{value}}}\n")
 
         for name, value in self.constants.constant_values.items():
             # Latex does not support underscores in commands.
             name = name.replace("_", "")
-            out.write("\\newcommand{{\\{}}}{{{}}}\n".format(name, value))
+            out.write(f"\\newcommand{{\\{name}}}{{{value}}}\n")

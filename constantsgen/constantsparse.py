@@ -154,11 +154,11 @@ class ConstantsParser:
 
         if self.imported_constants:
             names = list(self.imported_constants)
-            raise Exception("constants {} not found".format(names))
+            raise Exception(f"constants {names} not found")
 
         if self.imported_enums:
             names = list(self.imported_enums)
-            raise Exception("enums {} not found".format(names))
+            raise Exception(f"enums {names} not found")
 
         # Add manual suffixes now that all values are loaded.
         for name, value in manual_suffixes.items():

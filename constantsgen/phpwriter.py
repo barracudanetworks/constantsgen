@@ -9,7 +9,7 @@ class PHPWriter:
         for enum in self.constants.enum_values.values():
             out.write("\n")
             for name, value in enum.items():
-                out.write("define('{}',        {});\n".format(name, value))
+                out.write(f"define('{name}',        {value});\n")
 
         for name, value in self.constants.constant_values.items():
-            out.write("define('{}',        {});\n".format(name, value))
+            out.write(f"define('{name}',        {value});\n")

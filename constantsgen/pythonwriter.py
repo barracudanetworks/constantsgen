@@ -7,9 +7,7 @@ class PythonWriter:
         out.write("from enum import Enum, unique\n\n")
 
         for name, enum in self.constants.enum_values.items():
-            out.write("""
-@unique
-class {}(Enum):\n""".format(name))
+            out.write(f"\n@unique\nclass {name}(Enum):\n")
             for base_name, value in enum.items():
                 # For the enum value names remove everything up through the
                 # first underscore and convert the remainder to lowercase. For
@@ -18,9 +16,9 @@ class {}(Enum):\n""".format(name))
                 first_underscore = base_name.find("_")
                 name = base_name[first_underscore + 1:].lower()
 
-                out.write("    {} = {}\n".format(name, value))
+                out.write(f"    {name} = {value}\n")
 
             out.write("\n\n")
 
         for name, value in self.constants.constant_values.items():
-            out.write("{} = {}\n".format(name, value))
+            out.write(f"{name} = {value}\n")
