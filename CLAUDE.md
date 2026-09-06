@@ -97,8 +97,9 @@ explicit-first shape the output order matches the declaration order only because
 member is the one that has to come first anyway.
 
 All malformed-input failures raise `ParseError` (defined in this module) — do not use `assert`
-for input validation here (see git history). One path still escapes that rule; see Known sharp
-edges.
+for input validation here (see git history). That includes the explicit value an implicit run
+counts up from: it must be an integer literal, since values are never evaluated, and an enum
+like `{ N_A = SOME_MACRO, N_B }` is rejected rather than crashing on `int()`.
 
 ### Writers — `pythonwriter.py`, `phpwriter.py`, `latexwriter.py`
 
@@ -118,26 +119,30 @@ Enums are only a real construct in the Python output:
   top-level `define(...)` / `\newcommand` entries under their unmangled source names.
 - **LaTeX** strips `_` from command *names* (LaTeX commands cannot contain underscores).
 
+A member renamed by an `enum:` name override is **not** mangled by the Python writer — an
+override is used exactly as written, since mangling it would defeat the point of overriding it.
+The parser records which destination names came from an override in
+`enum_overridden_names: dict[str, set[str]]` (destination enum name → member names), which is
+how the writer tells the two apart. LaTeX still strips underscores from overridden names, since
+that is a hard constraint of the format rather than a naming convention.
+
 ## Known sharp edges
 
 Confirmed against the current code; each is a live trap when editing:
 
-- **Mangling runs after name overrides.** In the fixture, the `enum:` override
-  `FROBULATOR_OBTUSE_NAME clearer_name` yields `FrobulatorType.name` in the Python output, not
-  `clearer_name`, because the writer still strips through the first underscore. PHP and LaTeX
-  keep `clearer_name` — the same member is spelled differently per language.
 - **LaTeX mangles names but not values.** The fixture generates
   `\newcommand{\ALSOGOESINTHEOUTPUT}{REASONABLE_CONSTANT + 2}`; the underscores in the value
   survive and that is not valid LaTeX.
-- **An enum's first value must be an integer literal if the rest are implicit.** The
-  continuation does `int(value, base=0)` on it, so `enum { N_A = SOME_MACRO, N_B }` dies with a
-  bare `ValueError` rather than a `ParseError` — the one remaining hole in the "always
-  `ParseError`" rule above.
 - **No line-continuation handling.** A `#define` ending in `\` is captured only up to the end of
   that line, backslash included.
 - **Function-like macros keep their parameter list in the name.** `#define F(x) ...` is imported
   under the literal name `F(x)`.
 - **Enum members must be one per line.** Both member patterns are `re.MULTILINE` and anchored to
   line ends, so a single-line `enum e { A = 1, B = 2 };` matches nothing and fails with
-  "enum e has no values". The enum pattern also requires a trailing `;` and does not tolerate
-  nested braces.
+  "enum e has no values". `clean_contents` exists because of that anchoring: anything trailing a
+  member — a comment, or leftover whitespace — silently dropped it, so comments and trailing
+  whitespace are removed from an enum body before the patterns run. Nothing does the same for
+  the rest of a source file, so a trailing comment on a `#define` still lands in its value.
+- **The enum pattern is brittle.** It requires a trailing `;` and does not tolerate nested
+  braces; a `}` inside a comment or a string in the enum body will also cut it short, since
+  comments are only stripped from the body after this pattern has already found its end.
