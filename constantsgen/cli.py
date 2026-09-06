@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 
 from constantsgen import constantsparse
@@ -12,21 +11,22 @@ writers = {
     'latex': latexwriter.LatexWriter,
 }
 
-parser = argparse.ArgumentParser(description="""Generate code in various
-languages containing constants in the specified C-like files.
+def main():
+    parser = argparse.ArgumentParser(description="""Generate code in various
+    languages containing constants in the specified C-like files.
 
-It supports #define constants and named enums.
-""")
-parser.add_argument("input_file", type=argparse.FileType('r'),
-                    help="Specification of which constants to export and which "
-                         "files to search")
-parser.add_argument("output_file", type=argparse.FileType('w'),
-                    help="Name of generated constants file")
-parser.add_argument("-l", "--language", choices=writers, default='python',
-                    help="output file language (default: %(default)s)")
-args = parser.parse_args()
+    It supports #define constants and named enums.
+    """)
+    parser.add_argument("input_file", type=argparse.FileType('r'),
+                        help="Specification of which constants to export and which "
+                             "files to search")
+    parser.add_argument("output_file", type=argparse.FileType('w'),
+                        help="Name of generated constants file")
+    parser.add_argument("-l", "--language", choices=writers, default='python',
+                        help="output file language (default: %(default)s)")
+    args = parser.parse_args()
 
-constants = constantsparse.ConstantsParser(args.input_file)
+    constants = constantsparse.ConstantsParser(args.input_file)
 
-writer = writers[args.language](constants)
-writer.write(args.output_file)
+    writer = writers[args.language](constants)
+    writer.write(args.output_file)
