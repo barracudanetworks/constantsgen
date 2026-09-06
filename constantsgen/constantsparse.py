@@ -50,12 +50,16 @@ class ConstantsParser:
                 section = line[:-2]
                 continue
 
+            if section is None:
+                raise ParseError(
+                    f"data line before any section header: {line!r}")
+
             if section == "file":
                 self.source_files.append(line[:-1])
 
             elif section == "constant":
                 words = line.split()
-                if len(words) > 2:
+                if not words or len(words) > 2:
                     raise ParseError(
                         f"constant line expects 'source_name [destination_name]': {line!r}")
                 # Export as the source name if only one is provided; otherwise
