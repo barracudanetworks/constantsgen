@@ -30,17 +30,25 @@ class PythonWriter:
         out.write("from enum import Enum, unique\n\n")
 
         for name, enum in self.constants.enum_values.items():
+            overridden = self.constants.enum_overridden_names[name]
+
             # C enums may give several names the same value; @unique would
             # reject those aliases when the generated file is imported.
             decorator = "@unique\n" if values_are_unique(enum) else ""
             out.write(f"\n{decorator}class {name}(Enum):\n")
             for base_name, value in enum.items():
-                # For the enum value names remove everything up through the
-                # first underscore and convert the remainder to lowercase. For
-                # example the value NV_BOOL is assigned to bool. If there is no
-                # underscore, find() returns -1 and the entire string is used.
-                first_underscore = base_name.find("_")
-                name = base_name[first_underscore + 1:].lower()
+                if base_name in overridden:
+                    # A name given in the specification is used as written;
+                    # mangling it would defeat the point of the override.
+                    name = base_name
+                else:
+                    # For the enum value names remove everything up through the
+                    # first underscore and convert the remainder to lowercase.
+                    # For example the value NV_BOOL is assigned to bool. If
+                    # there is no underscore, find() returns -1 and the entire
+                    # string is used.
+                    first_underscore = base_name.find("_")
+                    name = base_name[first_underscore + 1:].lower()
 
                 out.write(f"    {name} = {value}\n")
 
