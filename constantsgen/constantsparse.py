@@ -1,6 +1,6 @@
 import re
 import os
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 
 EnumImport = namedtuple("EnumImport",
                         "source_name destination_name name_overrides")
@@ -30,10 +30,10 @@ class ConstantsParser:
         self.source_files = []
         self.imported_constants = {}
         self.imported_enums = {}
-        self.constant_values = OrderedDict()
-        self.enum_values = OrderedDict()
+        self.constant_values = {}
+        self.enum_values = {}
 
-        manual_suffixes = OrderedDict()
+        manual_suffixes = {}
 
         section = None
         for line in input_file:
@@ -117,7 +117,7 @@ class ConstantsParser:
                 contents = enum_contents.search(enum).group(1)
 
                 name = enum_definition.destination_name
-                self.enum_values[name] = OrderedDict()
+                self.enum_values[name] = {}
                 enum_values = self.enum_values[name]
 
                 explicit_values = enum_explicit_value.findall(contents)
