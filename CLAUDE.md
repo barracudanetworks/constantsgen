@@ -73,9 +73,11 @@ this ordering matters only in the generated file — it is what lets a suffix va
 to a constant read from a source file (`ALSO_GOES_IN_THE_OUTPUT REASONABLE_CONSTANT + 2` in the
 fixture) and be defined after it.
 
-A section header is any line ending in `:`. Unrecognized section names — including
-`manual_`-prefixed ones that are not exactly `manual_prefix`/`manual`/`manual_suffix` — are
-**silently ignored** along with all their data lines, rather than raising.
+A section header is any line ending in `:`. Its name must be one of the `sections` set;
+anything else — a misspelling, or a `manual_`-prefixed name that is not exactly
+`manual_prefix`/`manual`/`manual_suffix` — raises `ParseError` at the header, since accepting it
+would silently drop every line under it. Adding a section means adding it to that set as well as
+to the dispatch below it.
 
 C parsing is regex-based (module-level compiled patterns), not a real parser — syntactically
 invalid C (e.g. XDR) is fine. The `constants` pattern deliberately keeps a `#define`'s name and

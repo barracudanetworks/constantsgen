@@ -1,5 +1,6 @@
 # Comments starting with # and blank lines are ignored.
-# Lines ending in : start a section.
+# Lines ending in : start a section. Only the sections below are
+# recognized; any other name is an error.
 # Arguments outside brackets are required; those in brackets are not.
 # Sections:
 #  file:

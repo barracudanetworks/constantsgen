@@ -39,6 +39,11 @@ enum_value_line = re.compile(r"[^\s,=]+(?:\s*=\s*[^\s,]+)?,?")
 # Comments, removed from an enum's contents before its values are matched.
 comments = re.compile(r"/\*.*?\*/|//[^\n]*", flags=re.DOTALL)
 
+# The sections a specification may hold. Anything else is a mistake, and
+# accepting it would silently drop every line under it.
+sections = frozenset({"file", "constant", "enum",
+                      "manual_prefix", "manual", "manual_suffix"})
+
 
 def clean_contents(contents):
     """Remove comments and trailing whitespace from an enum's contents.
@@ -92,6 +97,8 @@ class ConstantsParser:
             # Set section based on header
             if line.endswith(":\n"):
                 section = line[:-2]
+                if section not in sections:
+                    raise ParseError(f"unknown section: {line!r}")
                 continue
 
             if section is None:
@@ -133,22 +140,24 @@ class ConstantsParser:
 
                 self.imported_enums[target.source_name] = target
 
-            elif section.startswith("manual"):
-                target_container = None
+            else:
+                # manual_prefix goes straight into the output; manual and
+                # manual_suffix are held aside and appended once the source
+                # files have been read, so that they may refer to what those
+                # files provide.
                 if section == "manual_prefix":
                     target_container = self.constant_values
-                elif section == "manual" or section == "manual_suffix":
+                else:
                     target_container = manual_suffixes
 
-                if target_container is not None:
-                    # Separate the key, and only the key, by whitespace.
-                    # The remainder of the line is the value.
-                    words = line.split(None, 1)
-                    if len(words) < 2:
-                        raise ParseError(
-                            f"{section} line expects 'name value': {line!r}")
-                    key, value = words
-                    target_container[key] = value.rstrip()
+                # Separate the key, and only the key, by whitespace.
+                # The remainder of the line is the value.
+                words = line.split(None, 1)
+                if len(words) < 2:
+                    raise ParseError(
+                        f"{section} line expects 'name value': {line!r}")
+                key, value = words
+                target_container[key] = value.rstrip()
 
         # Resolve paths in the input file relative to its location.
         input_dir = Path(input_file.name).parent

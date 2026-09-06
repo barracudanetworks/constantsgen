@@ -269,16 +269,34 @@ class SpecificationTest(GeneratorTestCase):
         self.assertEqual(list(constants.constant_values),
                          ["BEFORE", "FROM_FILE", "AFTER"])
 
-    def test_unknown_sections_are_ignored(self):
-        # Not by design, but a change here should be a deliberate one.
-        constants = self.parse("""\
-            unknown:
-            ignored data
-            manual:
-            NAME value
-            """)
+    def test_unknown_section_raises(self):
+        with self.assertRaises(ParseError):
+            self.parse("unknown:\ndata\n")
 
-        self.assertEqual(constants.constant_values, {"NAME": "value"})
+    def test_a_misspelled_manual_section_raises(self):
+        # These once passed the section test but matched no container, so
+        # every line under them was dropped.
+        with self.assertRaises(ParseError):
+            self.parse("manual_prefixes:\nNAME value\n")
+
+    def test_every_documented_section_is_accepted(self):
+        constants = self.parse("""\
+            file:
+            file.h
+            constant:
+            A_CONSTANT
+            enum:
+            an_enum_e AnEnum
+            manual_prefix:
+            BEFORE 1
+            manual:
+            MIDDLE 2
+            manual_suffix:
+            AFTER 3
+            """, {"file.h": "#define A_CONSTANT 1\nenum an_enum_e {\n    E_X,\n};\n"})
+
+        self.assertEqual(list(constants.constant_values),
+                         ["BEFORE", "A_CONSTANT", "MIDDLE", "AFTER"])
 
     def test_constant_line_with_too_many_names_raises(self):
         with self.assertRaises(ParseError):
