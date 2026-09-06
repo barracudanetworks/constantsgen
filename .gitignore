@@ -1,4 +1,11 @@
 *.pyc
+__pycache__/
 /constants.py
 /constants.php
 /constants.tex
+
+# Virtualenvs and packaging build artifacts
+.venv/
+/build/
+/dist/
+*.egg-info/
