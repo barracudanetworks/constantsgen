@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "constantsgen"
+version = "1.0.0"
+description = "Generate code in various languages containing constants defined in C-like files"
+readme = "readme.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE.md" }
+authors = [{ name = "Steve Dougherty" }]
+keywords = ["codegen", "constants", "enum", "c"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Code Generators",
+]
+
+[project.urls]
+Homepage = "https://github.com/barracudanetworks/constantsgen"
+
+[project.scripts]
+generate_constants = "constantsgen.cli:main"
+
+[tool.setuptools]
+packages = ["constantsgen"]

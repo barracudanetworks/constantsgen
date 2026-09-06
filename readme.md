@@ -15,7 +15,14 @@ Supported output languages:
 * PHP
 * LaTeX
 
+Installation:
+
+    pip install .
+
+This provides a `generate_constants` command. To run without installing,
+use `python -m constantsgen` from this source tree.
+
 Example usage:
 
-    ./generate_constants constants.txt constants.py
-    ./generate_constants -l php constants.txt constants.php
+    python -m constantsgen constants.txt constants.py
+    python -m constantsgen -l php constants.txt constants.php
