@@ -8,7 +8,11 @@
 #    source_name [destination_name]
 #  enum:
 #    source_name destination_name [source_value destination_value]...
+#    Each value must be on a line of its own in the source file.
+#  manual_prefix:
+#    name value
 #  manual:
+#  manual_suffix:
 #    name value
 
 # An example:
@@ -30,7 +34,8 @@ enum:
 # if any, removed, and are converted to lower-case.
 frobulator_types_e FrobulatorType FROBULATOR_OBTUSE_NAME clearer_name
 # Without this name override FROBULATOR_OBTUSE_NAME would become
-# FrobulatorType.obtuse_name.
+# FrobulatorType.obtuse_name. A name given here is used as written
+# instead, so this one becomes FrobulatorType.clearer_name.
 
 manual:
 # Alias for manual_suffix. Manual suffixes go after the values read
